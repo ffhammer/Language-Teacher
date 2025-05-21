@@ -6,8 +6,6 @@ from datetime import date
 import random
 import time
 
-random.seed(0)
-
 st.set_page_config(page_title="Anki App", layout="wide")
 
 # CSS to reduce distractions
@@ -59,7 +57,13 @@ with Session(engine) as sess:
 
     if cards:
         card = cards[0]
-        side = random.choice(["a", "b"])
+
+        # Use session state to store the current side
+        if "side" not in st.session_state:
+            st.session_state.side = random.choice(["a", "b"])
+            st.session_state.shown = False
+
+        side = st.session_state.side
         front = card.a_content if side == "a" else card.b_content
         back = card.b_content if side == "a" else card.a_content
 
@@ -86,7 +90,9 @@ with Session(engine) as sess:
             time.sleep(0.5)
             sess.add(card)
             sess.commit()
+            # Reset state for next card
             st.session_state.shown = False
+            st.session_state.side = random.choice(["a", "b"])
             st.rerun()
     else:
         st.success("No cards to review today.")
