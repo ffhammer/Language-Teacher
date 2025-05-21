@@ -1,11 +1,10 @@
 import streamlit as st
-from src.gemini import client
+from src.llm import gemini_structured_input, ollama_structured_input
 from pydantic import BaseModel, Field
 from src.db import engine
 from sqlmodel import Session, select
 from src.anki import AnkiCard
 from typing import Optional
-from google.genai import types
 import random
 
 # Styling
@@ -76,21 +75,16 @@ if st.button("Submit"):
     if not user_input.strip():
         st.warning("Please write a sentence first.")
     else:
-        response = client.models.generate_content(
-            model="gemini-2.0-flash",
-            config=types.GenerateContentConfig(
-                system_instruction=f"""
-You are a friendly Spanish tutor for absolute beginners.
-The student must write a sentence using the word "{card.a_content}" - "{card.b_content}".
-Evaluate correctness kindly and ignore minor typos or missing accents.
-Give short, helpful feedback if incorrect. Stay BRIEF, no more than one maybe 2 sentences.
-""",
-                response_schema=FeedBackMessage,
-                response_mime_type="application/json",
-            ),
-            contents=user_input,
+        val = ollama_structured_input(
+            f"""
+            You are a friendly Spanish tutor for absolute beginners.
+            The student must write a sentence using the word "{card.a_content}" - "{card.b_content}".
+            Evaluate correctness kindly and ignore minor typos or missing accents.
+            Give short, helpful feedback if incorrect. Stay BRIEF, no more than one maybe 2 sentences.
+            """,
+            user_input=user_input,
+            Schema=FeedBackMessage,
         )
-        val: FeedBackMessage = response.parsed
         if val is None:
             st.error("Sorry, I couldn't evaluate your sentence. Please try again.")
             st.stop()
