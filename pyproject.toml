@@ -1,0 +1,10 @@
+[project]
+name = "language-teacher"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "sqlmodel>=0.0.24",
+    "streamlit>=1.45.1",
+]
