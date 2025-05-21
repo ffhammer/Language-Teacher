@@ -1,6 +1,29 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Column, LargeBinary, Enum
 from typing import Optional
 from datetime import date, timedelta
+from enum import StrEnum
+
+
+class CardCategorie(StrEnum):
+    regular_verb = "verb"
+    irregular_verb = "irregular_verb"
+    noun = "noun"
+    adjective = "adjective"
+    adverb = "adverb"
+    phrase = "phrase"
+    idiom = "idiom"
+    expression = "expression"
+    grammar = "grammar"
+    sentence = "sentence"
+    question = "question"
+    number = "number"
+    preposition = "preposition"
+    conjunction = "conjunction"
+    pronoun = "pronoun"
+    article = "article"
+    proverb = "proverb"
+    slang = "slang"
+    cultural_note = "cultural note"
 
 
 class AnkiCard(SQLModel, table=True):
@@ -22,12 +45,24 @@ class AnkiCard(SQLModel, table=True):
     b_content: str = Field(description="The Content of translation/other site")
 
     next_date: date = Field(default_factory=date.today, index=True)
+    a_mp3: Optional[bytes] = Field(
+        default=None, sa_column=Column(LargeBinary), description="Audio for a_content"
+    )
+    b_mp3: Optional[bytes] = Field(
+        default=None, sa_column=Column(LargeBinary), description="Audio for b_content"
+    )
+    category: CardCategorie = Field(
+        sa_column=Column(Enum(CardCategorie), index=True, nullable=False)
+    )
 
 
 def update_card(card: AnkiCard, quality: int) -> None:
     assert 0 <= quality <= 5
     # SM2 core
-    if quality < 3:
+    if quality == 0:
+        card.repetitions = 0
+        card.interval = 0
+    elif quality < 3:
         card.repetitions = 0
         card.interval = 1
     else:

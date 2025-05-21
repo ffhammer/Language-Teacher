@@ -3,7 +3,7 @@ from src.llm import gemini_structured_input, ollama_structured_input
 from pydantic import BaseModel, Field
 from src.db import engine
 from sqlmodel import Session, select
-from src.anki import AnkiCard
+from src.anki import AnkiCard, CardCategorie
 from typing import Optional
 import random
 
@@ -37,16 +37,22 @@ st.markdown(
 )
 
 st.title("Sentence Practice")
+category_options = ["All"] + [c.value for c in CardCategorie]
+selected_category = st.selectbox("Select Card Category", category_options)
 
 st.session_state.setdefault("current_card", None)
 
 if st.session_state.current_card is None:
     with Session(engine) as session:
-        statement = (
-            select(AnkiCard)
-            .order_by(AnkiCard.next_date, AnkiCard.easiness_factor)
-            .limit(20)
-        )
+        statement = select(AnkiCard)
+
+        if selected_category != "All":
+            statement = statement.where(AnkiCard.category == selected_category)
+
+        statement = statement.order_by(
+            AnkiCard.next_date, AnkiCard.easiness_factor
+        ).limit(20)
+
         results = session.exec(statement).all()
         if results:
             st.session_state.current_card = random.choice(results)
