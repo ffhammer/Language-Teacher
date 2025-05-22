@@ -1,7 +1,7 @@
 import streamlit as st
 from src.db import engine
 from sqlmodel import Session, select
-from src.anki import AnkiCard, update_card, CardCategorie
+from src.anki import AnkiCard, update_card, CardCategory
 from datetime import date
 import io
 import random
@@ -55,7 +55,7 @@ st.title("Language Teacher")
 
 
 # Category selection
-category_options = ["All"] + [c.value for c in CardCategorie]
+category_options = ["All"] + [c.value for c in CardCategory]
 selected_category = st.selectbox("Select Card Category", category_options)
 
 # Initialize repeat_stack in session state
@@ -72,7 +72,7 @@ with Session(engine) as sess:
 
     # Filter out cards in repeat_stack unless no other cards left
     repeat_stack = st.session_state.repeat_stack
-    regular_cards = [c for c in cards if c.id not in repeat_stack]
+    regular_cards = [c for c in cards if c not in repeat_stack]
     if regular_cards:
         card = regular_cards[0]
     elif repeat_stack:
@@ -144,5 +144,8 @@ with Session(engine) as sess:
             st.session_state.shown = False
             st.session_state.side = "b"  # random.choice(["a", "b"])
             st.rerun()
+        if st.session_state.get("shown") and card.notes:
+            st.markdown(f"Notes:\n{card.notes}")
+
     else:
         st.success("No cards to review today.")

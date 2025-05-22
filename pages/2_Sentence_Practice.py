@@ -3,7 +3,7 @@ from src.llm import gemini_structured_input, ollama_structured_input
 from pydantic import BaseModel, Field
 from src.db import engine
 from sqlmodel import Session, select
-from src.anki import AnkiCard, CardCategorie
+from src.anki import AnkiCard, CardCategory
 from typing import Optional
 import random
 
@@ -37,7 +37,7 @@ st.markdown(
 )
 
 st.title("Sentence Practice")
-category_options = ["All"] + [c.value for c in CardCategorie]
+category_options = ["All"] + [c.value for c in CardCategory]
 selected_category = st.selectbox("Select Card Category", category_options)
 
 st.session_state.setdefault("current_card", None)

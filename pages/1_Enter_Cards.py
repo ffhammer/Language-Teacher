@@ -1,6 +1,6 @@
 import streamlit as st
 from sqlmodel import Session
-from src.anki import AnkiCard, CardCategorie
+from src.anki import AnkiCard, CardCategory
 from src.audio import add_audios_inplance
 from src.db import engine
 
@@ -8,9 +8,9 @@ st.title("Add New Anki Card")
 
 a_content = st.text_input("Side A")
 b_content = st.text_input("Side B")
-category: CardCategorie = st.selectbox(
+category: CardCategory = st.selectbox(
     "Category",
-    CardCategorie,
+    CardCategory,
 )
 
 if st.button("Submit") and a_content and b_content:

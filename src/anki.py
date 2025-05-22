@@ -4,7 +4,7 @@ from datetime import date, timedelta
 from enum import StrEnum
 
 
-class CardCategorie(StrEnum):
+class CardCategory(StrEnum):
     regular_verb = "verb"
     irregular_verb = "irregular_verb"
     noun = "noun"
@@ -43,6 +43,9 @@ class AnkiCard(SQLModel, table=True):
 
     a_content: str = Field(description="The Content of one site")
     b_content: str = Field(description="The Content of translation/other site")
+    notes: Optional[str] = Field(
+        None, description="Optional notes and context or examples"
+    )
 
     next_date: date = Field(default_factory=date.today, index=True)
     a_mp3: Optional[bytes] = Field(
@@ -51,8 +54,8 @@ class AnkiCard(SQLModel, table=True):
     b_mp3: Optional[bytes] = Field(
         default=None, sa_column=Column(LargeBinary), description="Audio for b_content"
     )
-    category: CardCategorie = Field(
-        sa_column=Column(Enum(CardCategorie), index=True, nullable=False)
+    category: CardCategory = Field(
+        sa_column=Column(Enum(CardCategory), index=True, nullable=False)
     )
 
 

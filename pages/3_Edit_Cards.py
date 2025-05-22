@@ -2,10 +2,10 @@ import streamlit as st
 from datetime import date
 from sqlmodel import Session, select
 from src.db import engine
-from src.anki import AnkiCard, CardCategorie
+from src.anki import AnkiCard, CardCategory
 
 st.title("Edit Anki Cards")
-category_options = ["All"] + [c.value for c in CardCategorie]
+category_options = ["All"] + [c.value for c in CardCategory]
 selected_category = st.selectbox("Select Card Category", category_options)
 sort_by: str = st.selectbox("Sort by", ["next_date", "easiness_factor"])
 order: str = st.radio("Order", ["ascending", "descending"])
@@ -25,10 +25,10 @@ with Session(engine) as sess:
         nd: date = cols[2].date_input(
             "Next Date", value=card.next_date, key=f"d_{card.id}"
         )
-        category: CardCategorie = cols[3].selectbox(
+        category: CardCategory = cols[3].selectbox(
             "Category",
-            CardCategorie,
-            index=list(CardCategorie).index(card.category),
+            CardCategory,
+            index=list(CardCategory).index(card.category),
             key=f"cat_{card.id}",
         )
         ef: float = cols[4].number_input(
