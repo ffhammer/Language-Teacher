@@ -21,9 +21,7 @@ body {
     background-color: #4F8CFD;
     color: #fff;
 }
-.stSlider > div {
-    background-color: #1A2233 !important;
-}
+
 h1, h2, h3 {
     text-align: center;
     font-family: 'Inter', sans-serif;
