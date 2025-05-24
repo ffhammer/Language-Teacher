@@ -1,10 +1,11 @@
+import os
+from typing import Optional, Type
+
 from dotenv import load_dotenv
 from google import genai
-import os
 from google.genai import types
-from typing import Type, Optional
-from pydantic import BaseModel, ValidationError
 from ollama import chat
+from pydantic import BaseModel, ValidationError
 
 assert load_dotenv()
 
@@ -14,7 +15,6 @@ client = genai.Client(api_key=os.environ["GEMINI_KEY"])
 def gemini_structured_input(
     system_prompt: str, user_input: str, Schema: Type[BaseModel]
 ) -> Optional[Type[BaseModel]]:
-
     response = client.models.generate_content(
         model="gemini-2.0-flash",
         config=types.GenerateContentConfig(

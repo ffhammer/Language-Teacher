@@ -1,11 +1,13 @@
-import streamlit as st
-from src.llm import gemini_structured_input, ollama_structured_input
-from pydantic import BaseModel, Field
-from src.db import engine
-from sqlmodel import Session, select
-from src.anki import AnkiCard, CardCategory
-from typing import Optional
 import random
+from typing import Optional
+
+import streamlit as st
+from pydantic import BaseModel, Field
+from sqlmodel import Session, select
+
+from src.anki import AnkiCard, CardCategory
+from src.db import engine
+from src.llm import ollama_structured_input
 
 # Styling
 st.markdown(

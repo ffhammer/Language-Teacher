@@ -1,6 +1,6 @@
-from src.anki import SQLModel, AnkiCard
-from sqlmodel import create_engine, Session, select
-from datetime import date
+from sqlmodel import create_engine
+
+from src.anki import SQLModel
 
 engine = create_engine("sqlite:///db.sqlite")
 

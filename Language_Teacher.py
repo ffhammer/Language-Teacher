@@ -1,51 +1,22 @@
-import streamlit as st
-from src.db import engine
-from sqlmodel import Session, select
-from src.anki import AnkiCard, update_card, CardCategory
-from datetime import date
 import io
-import random
 import time
+from datetime import date
+
+import streamlit as st
 from pydub import AudioSegment
 from pydub.playback import play
+from sqlmodel import Session, select
+
+from src.anki import AnkiCard, CardCategory, update_card
+from src.db import engine
 
 st.set_page_config(page_title="Anki App", layout="wide")
 
 # CSS to reduce distractions
 st.markdown(
-    """
+    f"""
 <style>
-    body {
-        background-color: #111;
-        color: #eee;
-    }
-    .block-container {
-        max-width: 700px;
-        margin: auto;
-        padding-top: 5vh;
-    }
-    .stButton>button {
-        background-color: #222;
-        color: white;
-        border-radius: 8px;
-        padding: 10px 20px;
-    }
-    .stSlider > div {
-        background-color: #111;
-    }
-    h1, h2, h3 {
-        text-align: center;
-    }
-    .question-box {
-        font-size: 2em;
-        text-align: center;
-        margin: 2rem 0;
-        font-weight: bold;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        gap: 10px;
-    }
+   {open("style.css").read()}
 </style>
 """,
     unsafe_allow_html=True,

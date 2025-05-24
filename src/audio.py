@@ -1,7 +1,9 @@
-from gtts import gTTS
-from src.anki import AnkiCard
 import io
+
+from gtts import gTTS
 from loguru import logger
+
+from src.anki import AnkiCard
 
 
 def _single_try(word: str, lang: str) -> io.BytesIO | None:
@@ -14,6 +16,5 @@ def _single_try(word: str, lang: str) -> io.BytesIO | None:
 
 
 def add_audios_inplance(card: AnkiCard, a_lang="es", b_lang="de"):
-
     card.a_mp3 = _single_try(card.a_content, a_lang)
     card.b_mp3 = _single_try(card.b_content, b_lang)
