@@ -62,11 +62,7 @@ class AnkiCard(SQLModel, table=True):
 
 def update_card(card: AnkiCard, quality: int) -> None:
     assert 0 <= quality <= 5
-    # SM2 core
-    if quality == 0:
-        card.repetitions = 0
-        card.interval = 0
-    elif quality < 3:
+    if quality < 3:
         card.repetitions = 0
         card.interval = 1
     else:
@@ -76,11 +72,10 @@ def update_card(card: AnkiCard, quality: int) -> None:
         elif card.repetitions == 2:
             card.interval = 6
         else:
-            card.interval = int(card.interval * card.easiness_factor)
-    # update EF
+            card.interval = int(round(card.interval * card.easiness_factor))
     card.easiness_factor = max(
         1.3,
-        card.easiness_factor + (0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02)),
+        card.easiness_factor + 0.1 - (5 - quality) * (0.08 + (5 - quality) * 0.02),
     )
     card.quality = quality
     card.next_date = date.today() + timedelta(days=card.interval)

@@ -18,7 +18,7 @@ body {
     transition: background 0.2s;
 }
 .stButton>button:hover {
-    background-color: #4F8CFD;
+    background-color: #ff4c04;
     color: #fff;
 }
 
@@ -35,5 +35,9 @@ h1, h2, h3 {
     justify-content: center;
     align-items: center;
     gap: 10px;
-    color: #4F8CFD;
+    color: #ff4c04;
+}
+
+div[data-testid="stProgress"] > div > div > div {
+    color: #ff4c04 !important;
 }
