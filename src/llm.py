@@ -13,10 +13,13 @@ client = genai.Client(api_key=os.environ["GEMINI_KEY"])
 
 
 def gemini_structured_input(
-    system_prompt: str, user_input: str, Schema: Type[BaseModel]
+    system_prompt: str,
+    user_input: str,
+    Schema: Type[BaseModel],
+    model_name: str = "gemini-2.0-flash",
 ) -> Optional[Type[BaseModel]]:
     response = client.models.generate_content(
-        model="gemini-2.0-flash",
+        model=model_name,
         config=types.GenerateContentConfig(
             system_instruction=system_prompt,
             response_schema=Schema,
