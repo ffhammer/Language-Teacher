@@ -14,18 +14,24 @@ client = genai.Client(api_key=os.environ["GEMINI_KEY"])
 
 def gemini_structured_input(
     system_prompt: str,
-    user_input: str,
+    contents,
     Schema: Type[BaseModel],
     model_name: str = "gemini-2.0-flash",
+    disable_thinking: bool = False,
 ) -> Optional[Type[BaseModel]]:
+    config_args = {
+        "system_instruction": system_prompt,
+        "response_schema": Schema,
+        "response_mime_type": "application/json",
+    }
+
+    if disable_thinking:
+        config_args["thinking_config"] = types.ThinkingConfig(thinking_budget=0)
+
     response = client.models.generate_content(
         model=model_name,
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            response_schema=Schema,
-            response_mime_type="application/json",
-        ),
-        contents=user_input,
+        config=types.GenerateContentConfig(**config_args),
+        contents=contents,
     )
 
     return response.parsed
