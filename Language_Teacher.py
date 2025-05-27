@@ -42,8 +42,6 @@ def save_results(cards: list[AnkiCard], results: list[int]) -> None:
         sess.commit()
 
 
-cards_left = get_cards_next_cards(category=st.session_state.select_category)
-st.write(f"Cards to review: {len(cards_left)}")
 MAX_SESSION_NUMBER = 10
 
 
@@ -53,6 +51,8 @@ with center:
         st.session_state.select_category = st.selectbox(
             "Select Card Category", category_options
         )
+        cards_left = get_cards_next_cards(category=st.session_state.select_category)
+        st.write(f"Cards to review: {len(cards_left)}")
         start_new = st.button("Start a Learn Session")
 
         if start_new:
@@ -220,6 +220,9 @@ with center:
                         st.session_state.current_batch = [0, failures, []]
             with right:
                 if st.button("Start a new Session"):
+                    cards_left = get_cards_next_cards(
+                        category=st.session_state.select_category
+                    )
                     st.session_state.current_batch = [
                         0,
                         cards_left[:MAX_SESSION_NUMBER],
