@@ -77,3 +77,37 @@ class JsonEncodedList(TypeDecorator):
             )
             # Depending on strictness, you might return an empty list, None, or re-raise
             return []  # Or raise e
+
+
+class JsonEncodedStrList(TypeDecorator):
+    """Stores and retrieves a list of strings as JSON."""
+
+    impl = TEXT
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return None
+        if not isinstance(value, list):
+            raise TypeError("JsonEncodedStrList expects a list.")
+        # Ensure all elements are strings
+        if not all(isinstance(x, str) for x in value):
+            raise TypeError("All elements must be strings.")
+        return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return None
+        try:
+            result = json.loads(value)
+            if not isinstance(result, list):
+                if result is None:
+                    return []
+                raise ValueError("Stored JSON is not a list.")
+            # Ensure all elements are strings
+            if not all(isinstance(x, str) for x in result):
+                raise ValueError("Decoded JSON list contains non-string elements.")
+            return result
+        except (json.JSONDecodeError, TypeError, ValueError) as e:
+            logger.error(f"Error deserializing JsonEncodedStrList: {e}, value: {value}")
+            return []

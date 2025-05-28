@@ -21,6 +21,10 @@ class BaseTask(SQLModel):
     result_description: Optional[str] = Field(
         None, description="An description of the result of a task"
     )
+    text_below_task: str | None = Field(
+        None,
+        description="Optional text or instructions shown after the main task content and feedback.",
+    )
 
     @classmethod
     def model_json_schema(

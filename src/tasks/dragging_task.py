@@ -48,10 +48,6 @@ class DraggingTask(BaseTask, table=True):
         min_length=1,
         sa_column=Column(JsonEncodedList(item_type=DragAndDropTaskRow)),
     )
-    text_below_task: str | None = Field(
-        None,
-        description="Optional text shown after the main task content.",
-    )
 
     def display(self) -> bool:
         st.markdown(f"## {self.title}", unsafe_allow_html=True)
