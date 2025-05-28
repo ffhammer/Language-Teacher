@@ -1,8 +1,8 @@
-from src.tasks.dragging_task import DragAndDropTaskRow, DraggingTasks, dragging_task
+from src.tasks.dragging_task import DragAndDropTaskRow, DraggingTask
 
-example_task = DraggingTasks(
+example_task = DraggingTask(
     title="Arrastra las palabras correctas",
-    text_under_title="Completa las frases con la palabra correcta.",
+    suptitle="Completa las frases con la palabra correcta.",
     rows=[
         DragAndDropTaskRow(
             sentence="Yo $soy$ estudiante.", distractions=["eres", "es"]
@@ -17,7 +17,7 @@ example_task = DraggingTasks(
             sentence="Nosotros $hablamos$ español.", distractions=["habla", "hablo"]
         ),
     ],
-    text_task_title="¡Bien hecho si completas todas correctamente!",
+    text_below_task="¡Bien hecho si completas todas correctamente!",
 )
 
-dragging_task(example_task, unique_task_key="spanish_a1_example")
+example_task.display()

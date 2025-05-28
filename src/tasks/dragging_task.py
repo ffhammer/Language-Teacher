@@ -3,7 +3,12 @@ import re
 import streamlit as st
 from fill_in_blanks_component import fill_in_blanks
 from loguru import logger
-from pydantic import BaseModel, Field, computed_field, model_validator
+from pydantic import BaseModel, computed_field, model_validator
+from sqlmodel import Column, Field
+
+from src.utils import JsonEncodedList
+
+from .task import BaseTask
 
 
 class DragAndDropTaskRow(BaseModel):
@@ -26,7 +31,6 @@ class DragAndDropTaskRow(BaseModel):
     @computed_field
     @property
     def positives(self) -> list[str]:
-        # Extract all text between $...$
         return re.findall(r"\$([^$]+)\$", self.sentence)
 
     @model_validator(mode="after")
@@ -38,102 +42,109 @@ class DragAndDropTaskRow(BaseModel):
         return self
 
 
-class DraggingTasks(BaseModel):
-    title: str = Field(description="Main title for the task.")
-    text_under_title: str | None = Field(
-        None,
-        description="Optional text shown below the title for context.",
-    )
+class DraggingTask(BaseTask, table=True):
     rows: list[DragAndDropTaskRow] = Field(
-        description="List of sentence rows for the task.", min_length=1
+        description="List of sentence rows for the task.",
+        min_length=1,
+        sa_column=Column(JsonEncodedList(item_type=DragAndDropTaskRow)),
     )
-    text_task_title: str | None = Field(
+    text_below_task: str | None = Field(
         None,
         description="Optional text shown after the main task content.",
     )
 
+    def display(self) -> bool:
+        st.markdown(f"## {self.title}", unsafe_allow_html=True)
+        if self.suptitle:
+            st.markdown(
+                self.suptitle,
+                unsafe_allow_html=True,
+            )
 
-def get_errors(
-    result: list[dict[int, str]],
-    tasks: list[DragAndDropTaskRow],
-    options_by_key: dict[str, str],
-) -> list[tuple[str, str]] | None:
-    try:
-        assert len(result) == len(tasks)
-        errors = []
-        for res, task in zip(result, tasks):
-            for i, pos in enumerate(task.positives):
-                if options_by_key[res[i]] != pos:
-                    errors.append((pos, options_by_key[res[i]]))
-        return errors
-    except Exception as e:
-        logger.exception(f"Failed with {e}")
+        freeze_state = f"freeze_{self.id}"
+        if freeze_state not in st.session_state:
+            st.session_state[freeze_state] = False
+        segments = [task.stripped_sentence for task in self.rows]
 
+        options = []
+        options_by_key = {}
+        for i, task in enumerate(self.rows):
+            for j, pos in enumerate(task.positives):
+                options.append({"id": f"row_{i}_pos_{j}", "label": pos})
+                options_by_key[f"row_{i}_pos_{j}"] = pos
 
-def dragging_task(config: DraggingTasks, unique_task_key: str) -> bool:
-    st.markdown(
-        f"## {config.title}", unsafe_allow_html=True, key=f"title_{unique_task_key}"
-    )
-    if config.text_under_title:
-        st.markdown(
-            config.text_under_title,
-            unsafe_allow_html=True,
-            key=f"text_under_title_{unique_task_key}",
+            for j, neg in enumerate(task.distractions):
+                options.append({"id": f"row_{i}_neg_{j}", "label": neg})
+                options_by_key[f"row_{i}_neg_{j}"] = neg
+
+        component = fill_in_blanks(
+            segments_data=segments,
+            options=options,
+            freeze=st.session_state[freeze_state],
+            key=f"fill_in_{self.id}",
+        )
+        all_filled = all(
+            all(val is not None for val in dic.values()) for dic in component
         )
 
-    freeze_state = f"freeze_{unique_task_key}"
-    if freeze_state not in st.session_state:
-        st.session_state[freeze_state] = False
-    segments = [task.stripped_sentence for task in config.rows]
+        if not all_filled:
+            return False
 
-    options = []
-    options_by_key = {}
-    for i, task in enumerate(config.rows):
-        for j, pos in enumerate(task.positives):
-            options.append({"id": f"row_{i}_pos_{j}", "label": pos})
-            options_by_key[f"row_{i}_pos_{j}"] = pos
+        errors_key = f"errors_{self.id}"
+        if errors_key not in st.session_state:
+            if st.button("Submit", key=f"submit_{self.id}"):
+                st.session_state[freeze_state] = True
+                st.session_state[errors_key] = self._get_errors(
+                    result=component, options_by_key=options_by_key
+                )
+                st.rerun()
+        else:
+            errors = st.session_state[errors_key]
 
-        for j, neg in enumerate(task.distractions):
-            options.append({"id": f"row_{i}_neg_{j}", "label": neg})
-            options_by_key[f"row_{i}_neg_{j}"] = neg
+            # Prepare result_description with detailed feedback, but only show summary via st.success
+            total = sum(len(task.positives) for task in self.rows)
+            incorrect = len(errors) if errors else 0
+            correct = total - incorrect
 
-    component = fill_in_blanks(
-        segments_data=segments,
-        options=options,
-        freeze=st.session_state[freeze_state],
-        key=f"fill_in_{unique_task_key}",
-    )
-    all_filled = all(all(val is not None for val in dic.values()) for dic in component)
+            if errors is None:
+                self.result_description = (
+                    "An unknown error occurred while evaluating your answers."
+                )
+            elif not errors:
+                self.result_description = (
+                    "Excellent! You answered all everything correctly 🎉"
+                )
+            else:
+                details = "\n".join(
+                    f"- **Expected:** `{correct}` &nbsp;&nbsp; **Your answer:** `{user}`"
+                    for correct, user in errors
+                )
+                self.result_description = (
+                    f"You answered {correct} out of {total} blanks correctly.\n\n"
+                    f"### Incorrect Answers:\n{details}\n"
+                )
 
-    if not all_filled:
+            (
+                st.success(self.result_description)
+                if not errors
+                else st.markdown(self.result_description)
+            )
+
+            return st.button("Next Task", key=f"next_task_{self.id}")
         return False
 
-    errors_key = f"errors_{unique_task_key}"
-    if errors_key not in st.session_state:
-        if st.button("Submit", key=f"submit_{unique_task_key}"):
-            st.session_state[freeze_state] = True
-            st.session_state[errors_key] = get_errors(
-                result=component, tasks=config.rows, options_by_key=options_by_key
-            )
-            st.rerun()
-    else:
-        errors = st.session_state[errors_key]
-        if errors is None:
-            st.markdown(
-                "An unknown error happened sorry.",
-                key=f"error_unknown_{unique_task_key}",
-            )
-
-        elif not errors:
-            st.success("All answers are correct! 🎉", key=f"success_{unique_task_key}")
-        else:
-            st.markdown(
-                "### Incorrect Answers:", key=f"incorrect_header_{unique_task_key}"
-            )
-            for idx, (correct, user) in enumerate(errors):
-                st.markdown(
-                    f"- **Expected:** `{correct}` &nbsp;&nbsp; **Your answer:** `{user}`",
-                    key=f"incorrect_{unique_task_key}_{idx}",
-                )
-        return st.button("Next Task", key=f"next_task_{unique_task_key}")
-    return False
+    def _get_errors(
+        self,
+        result: list[dict[int, str]],
+        options_by_key: dict[str, str],
+    ) -> list[tuple[str, str]] | None:
+        try:
+            assert len(result) == len(self.rows)
+            errors = []
+            for res, task in zip(result, self.rows):
+                for i, pos in enumerate(task.positives):
+                    if options_by_key[res[i]] != pos:
+                        errors.append((pos, options_by_key[res[i]]))
+            return errors
+        except Exception as e:
+            logger.exception(f"Failed with {e}")
