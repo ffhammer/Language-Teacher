@@ -51,6 +51,30 @@ div[data-testid="stProgress"] > div > div > div {
     color: #ff4c04 !important;
 }
 
+.summary-msg {
+    background: #4e2819;
+    color: #fff;
+    border-radius: 16px;
+    padding: 0.7em 1.1em;
+    margin-bottom: 0.4em;
+    max-width: 60%;
+    float: left;
+    clear: both;
+    text-align: left;
+}
+
+.critic-msg {
+    background: #02499b;
+    color: #fff;
+    border-radius: 16px;
+    padding: 0.7em 1.1em;
+    margin-bottom: 0.4em;
+    max-width: 60%;
+    float: right;
+    clear: both;
+    text-align: right;
+}
+
 .user-msg {
     background: #ff4c04;
     color: #fff;
