@@ -6,9 +6,9 @@ from loguru import logger
 from pydantic import BaseModel, computed_field, model_validator
 from sqlmodel import Column, Field
 
-from src.utils import JsonEncodedList
+from src.utils import JsonEncodedListofBaseModels
 
-from .task import BaseTask
+from .base_task import BaseTask
 
 
 class DragAndDropTaskRow(BaseModel):
@@ -46,7 +46,7 @@ class DraggingTask(BaseTask, table=True):
     rows: list[DragAndDropTaskRow] = Field(
         description="List of sentence rows for the task.",
         min_length=1,
-        sa_column=Column(JsonEncodedList(item_type=DragAndDropTaskRow)),
+        sa_column=Column(JsonEncodedListofBaseModels(item_type=DragAndDropTaskRow)),
     )
 
     def display(self) -> bool:

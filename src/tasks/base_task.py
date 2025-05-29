@@ -1,4 +1,3 @@
-from datetime import date
 from typing import Optional
 
 from sqlmodel import Field, SQLModel
@@ -34,12 +33,3 @@ class BaseTask(SQLModel):
         return drop_fields_from_schema(
             json_schema=schema, fields_to_ignore=["excercise_plan_id", "id", "finished"]
         )
-
-
-class ExcerciePlan(SQLModel, table=True):
-    __table_args__ = {"extend_existing": True}
-
-    id: Optional[int] = Field(None, primary_key=True, index=True)
-    created_at: date = Field(index=True)
-    title: str
-    goal: str

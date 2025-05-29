@@ -13,7 +13,7 @@ from sqlmodel import Column, Field
 
 from src.utils import JsonEncodedStrList
 
-from .task import BaseTask
+from .base_task import BaseTask
 
 
 class FillInTask(BaseTask, table=True):

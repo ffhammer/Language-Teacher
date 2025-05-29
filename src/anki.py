@@ -1,8 +1,12 @@
 from datetime import date, timedelta
 from enum import StrEnum
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-from sqlmodel import Column, Enum, Field, LargeBinary, SQLModel
+from pydantic import BaseModel
+from sqlmodel import Column, Enum, Field, LargeBinary, Relationship, SQLModel
+
+if TYPE_CHECKING:
+    from src.tasks.vocab_tasks import VocabTask
 
 
 class CardCategory(StrEnum):
@@ -30,7 +34,8 @@ class CardCategory(StrEnum):
 class AnkiCard(SQLModel, table=True):
     __table_args__ = {"extend_existing": True}
     id: Optional[int] = Field(None, primary_key=True, index=True)
-
+    vocab_task_id: Optional[int] = Field(default=None, foreign_key="vocabtask.id")
+    vocab_task: Optional["VocabTask"] = Relationship(back_populates="cards")
     easiness_factor: float = Field(
         default=2.5,
         description="Easiness factor for the card (SM2 algorithm)",
@@ -79,3 +84,16 @@ def update_card(card: AnkiCard, quality: int) -> None:
     )
     card.quality = quality
     card.next_date = date.today() + timedelta(days=card.interval)
+
+
+class SimpleAnkiCard(BaseModel):
+    a_content: str = Field(description="The Content of one site")
+    b_content: str = Field(description="The Content of translation/other site")
+    category: CardCategory
+    notes: Optional[str] = Field(
+        None, description="Optional notes and context or examples"
+    )
+    id: Optional[int] = Field(
+        None,
+        description="When generating a new card, keep this as None!. When updating, use the specific id",
+    )

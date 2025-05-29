@@ -1,0 +1,3 @@
+SOURCE_LANGUAGE = "German"
+TARGET_LANGUAGE = "Spanish"
+LEVEL = "A1-A2"

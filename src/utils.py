@@ -24,7 +24,7 @@ class PydanticSqlModelEncoder(json.JSONEncoder):
         return super().default(o)
 
 
-class JsonEncodedList(TypeDecorator):
+class JsonEncodedListofBaseModels(TypeDecorator):
     """Stores and retrieves a list of Pydantic/SQLModel objects as JSON."""
 
     impl = TEXT  # Store as TEXT in the database
