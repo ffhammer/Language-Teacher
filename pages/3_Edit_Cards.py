@@ -1,6 +1,7 @@
 from datetime import date
 
 import streamlit as st
+from sqlalchemy.orm import noload
 from sqlmodel import Session, select
 
 from src.anki import AnkiCard, CardCategory
@@ -18,6 +19,8 @@ with Session(engine) as sess:
     stmt = stmt.order_by(col.asc() if order == "ascending" else col.desc())
     if selected_category != "All":
         stmt = stmt.where(AnkiCard.category == selected_category)
+    # Ensure the vocab_task relationship is not loaded
+    stmt = stmt.options(noload(AnkiCard.vocab_task))
     cards: list[AnkiCard] = sess.exec(stmt).all()
 
     for card in cards:

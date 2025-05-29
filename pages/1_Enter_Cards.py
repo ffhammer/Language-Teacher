@@ -169,7 +169,9 @@ with msg_area:
     col1, col2, col3 = st.columns([1, 5, 1])
     with col2:
         user_input = st.text_input(
-            "Type your message:", key="input", label_visibility="collapsed"
+            "Type your message:",
+            key=f"input_{len(state.chat)}",
+            label_visibility="collapsed",
         )
         send_btn = st.button("Send")
         if send_btn and user_input:
@@ -178,8 +180,6 @@ with msg_area:
             bot_reply = get_reply(state.chat)
             if bot_reply:
                 state.chat.append((bot_reply, "bot"))
-            state.input = ""
-
             st.rerun()
 
 
