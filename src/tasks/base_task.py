@@ -12,6 +12,7 @@ class BaseTask(SQLModel, ABC):
     id: Optional[int] = Field(None, primary_key=True, index=True)
     finished: bool = Field(False, index=True)
     excercise_plan_id: int = Field(0, index=True)
+    position: int = 0
 
     title: str = Field(description="Main title for the task.")
     suptitle: str | None = Field(
@@ -32,15 +33,16 @@ class BaseTask(SQLModel, ABC):
     ):
         schema = super().model_json_schema()
         return drop_fields_from_schema(
-            json_schema=schema, fields_to_ignore=["excercise_plan_id", "id", "finished"]
+            json_schema=schema,
+            fields_to_ignore=["excercise_plan_id", "id", "finished", "position"],
         )
 
     @abstractmethod
     def display():
         pass
 
-    @abstractmethod
     @classmethod
+    @abstractmethod
     def generate(
         cls, title: str, generation_instruction: str, purpose: str, timeout: float = 10
     ) -> Optional["BaseTask"]:

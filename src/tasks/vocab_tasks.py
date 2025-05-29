@@ -3,11 +3,14 @@ import time
 from typing import List
 
 import streamlit as st
+from loguru import logger
 from pydub import AudioSegment
 from pydub.playback import play
 from sqlmodel import Field, Relationship, Session
+from tqdm import tqdm
 
-from src.anki import AnkiCard, update_card
+from src.anki import AnkiCard, SimpleAnkiCard, update_card
+from src.audio import add_audios_inplance
 from src.config import INITIAL_PROMPT, LEVEL, SOURCE_LANGUAGE, TARGET_LANGUAGE
 from src.db import engine
 from src.llm import gemini_structured_ouput
@@ -225,6 +228,22 @@ class VocabTask(BaseTask, table=True):
         )
         contents = f"Title: {title}\n\nGeneration Instruction: {generation_instruction}\n\nPurpose: {purpose}"
 
-        return gemini_structured_ouput(
-            system_prompt=system_prompt, contents=contents, Schema=cls, timeout=timeout
+        cards = gemini_structured_ouput(
+            system_prompt=system_prompt,
+            contents=contents,
+            Schema=list[SimpleAnkiCard],
+            timeout=timeout,
         )
+        if cards is None:
+            return None
+
+        try:
+            anki_cards = []
+            for card in tqdm(cards, desc="Generating Anki Cards"):
+                obj = AnkiCard(**card.model_dump())
+                add_audios_inplance(obj)
+                anki_cards.append(obj)
+
+            return cls(cards=anki_cards)
+        except Exception as e:
+            logger.error(f"Generating the Anki Cards failed woth {e}")

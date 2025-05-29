@@ -1,3 +1,4 @@
+from .base_task import BaseTask
 from .dragging_task import DragAndDropTaskRow, DraggingTask
 from .fillin_task import FillInTask
 from .sentence_order import SentenceOrderTask
@@ -9,4 +10,5 @@ __all__ = [
     "FillInTask",
     "SentenceOrderTask",
     "VocabTask",
+    "BaseTask",
 ]

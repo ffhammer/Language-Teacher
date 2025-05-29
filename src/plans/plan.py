@@ -7,6 +7,7 @@ from sqlmodel import Field, Session, SQLModel, select
 
 from src.db import engine
 from src.tasks import DraggingTask, FillInTask
+from src.tasks.vocab_tasks import VocabTask
 
 
 class ExercisePlanStatus(BaseModel):
@@ -48,6 +49,13 @@ class ExercisePlan(SQLModel, table=True):
             ).all()
 
     @property
+    def vocab_tasks(self) -> list[VocabTask]:
+        with Session(engine) as sess:
+            return sess.exec(
+                select(VocabTask).where(VocabTask.excercise_plan_id == self.id)
+            ).all()
+
+    @property
     def status(self):
         fill_in_tasks = self.fill_in_tasks
         fill_in_finished = sum(
@@ -59,9 +67,12 @@ class ExercisePlan(SQLModel, table=True):
             1 for i in dragging_tasks if getattr(i, "finished", False)
         )
 
+        vocab_tasks = self.vocab_tasks
+        vocab_finished = sum(1 for i in vocab_tasks if getattr(i, "finished", False))
+
         return ExercisePlanStatus(
-            total_tasks=len(dragging_tasks) + len(fill_in_tasks),
-            finished_tasks=dragging_finished + fill_in_finished,
+            total_tasks=len(dragging_tasks) + len(fill_in_tasks) + len(vocab_tasks),
+            finished_tasks=dragging_finished + fill_in_finished + vocab_finished,
         )
 
 
