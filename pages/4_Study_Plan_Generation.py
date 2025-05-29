@@ -4,6 +4,7 @@ from loguru import logger
 from pdf2image import convert_from_bytes
 from streamlit import session_state as state
 
+from src.plans.generate_and_save import generate_and_save
 from src.plans.planning import ChatSpeaker, History_Type, StudyPlan, generate_new_plan
 from src.plans.summarize import create_summaries_of_last_plans
 
@@ -152,5 +153,10 @@ with msg_area:
         plan: StudyPlan = state.plan
         plan.display()
 
-        if st.button("Save"):
-            plan.save()
+        col1, col2 = st.columns((1, 1))
+        with col1:
+            if st.button("Save"):
+                plan.save()
+        with col2:
+            if st.button("Export"):
+                generate_and_save(plan)

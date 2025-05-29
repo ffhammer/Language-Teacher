@@ -244,6 +244,6 @@ class VocabTask(BaseTask, table=True):
                 add_audios_inplance(obj)
                 anki_cards.append(obj)
 
-            return cls(cards=anki_cards)
+            return cls(cards=anki_cards, title=title)
         except Exception as e:
             logger.error(f"Generating the Anki Cards failed woth {e}")
