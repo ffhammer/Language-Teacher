@@ -1,5 +1,6 @@
 import asyncio
 import os
+from datetime import datetime
 from typing import Optional, Type
 
 from dotenv import load_dotenv
@@ -8,6 +9,23 @@ from google.genai import types
 from loguru import logger
 from ollama import chat
 from pydantic import BaseModel, ValidationError
+from sqlmodel import Field, SQLModel
+
+from src.db import Session, engine
+
+
+class ModelUsage(SQLModel, table=True):
+    __table_args__ = {"extend_existing": True}
+
+    id: Optional[int] = Field(None, primary_key=True)
+    model_name: str = Field(index=True)
+    usage_time: datetime
+    input_tokens: int
+    output_tokens: int
+
+    def __repr__(self):
+        return f"On {self.usage_time.date()}: {self.model_name} used with input={self.input_tokens}, output={self.output_tokens}"
+
 
 assert load_dotenv()
 
@@ -23,11 +41,29 @@ def retry_n_times(n=3):
                 result = fn(*args, **kwargs)
                 if result is not None:
                     return result
+                if attempt + 1 < n:
+                    logger.info(f"{fn.__name__} failed. Retrying")
             return None
 
         return wrapper
 
     return decorator
+
+
+def save_model_usage(response, model_name):
+    usage = ModelUsage(
+        model_name=model_name,
+        input_tokens=response.usage_metadata.prompt_token_count,
+        output_tokens=response.usage_metadata.candidates_token_count,
+        usage_time=datetime.now(),
+    )
+    if response.usage_metadata.thoughts_token_count:
+        usage.output_tokens += response.usage_metadata.thoughts_token_count
+
+    logger.debug(usage.__repr__())
+    with Session(engine) as sess:
+        sess.add(usage)
+        sess.commit()
 
 
 def gemini_text_response(
@@ -48,11 +84,13 @@ def gemini_text_response(
 
         async def call_gemini():
             client = genai.Client(api_key=os.environ["GEMINI_KEY"])
-            return client.models.generate_content(
+            response = client.models.generate_content(
                 model=model_name,
                 config=types.GenerateContentConfig(**config_args),
                 contents=contents,
             )
+            save_model_usage(response, model_name)
+            return response
 
         response = asyncio.run(asyncio.wait_for(call_gemini(), timeout=timeout))
 
@@ -84,22 +122,19 @@ def gemini_structured_input(
 
     async def call_gemini():
         client = genai.Client(api_key=os.environ["GEMINI_KEY"])
-        return client.models.generate_content(
+        response = client.models.generate_content(
             model=model_name,
             config=types.GenerateContentConfig(**config_args),
             contents=contents,
         )
+        save_model_usage(response, model_name)
+        return response
 
     try:
         response = asyncio.run(asyncio.wait_for(call_gemini(), timeout=timeout))
-        if response is None:
-            logger.error("No response received from Gemini structured input.")
-            return None
-        try:
-            return Schema.model_validate_json(response.text)
-        except ValidationError as ve:
-            logger.error(f"Validation error: {ve}")
-            return None
+        if not response.parsed:
+            raise RuntimeError("No response received from Gemini structured input.")
+        return response.parsed
     except asyncio.TimeoutError:
         logger.error("Gemini structured input timed out.")
         return None

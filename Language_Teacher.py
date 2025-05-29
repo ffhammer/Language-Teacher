@@ -1,8 +1,13 @@
 import streamlit as st
+from sqlmodel import SQLModel
 
 from src.anki import CardCategory
-from src.db import get_cards_next_cards
+from src.db import engine, get_cards_next_cards
+from src.llm import ModelUsage  # noqa: F401
 from src.tasks import VocabTask
+
+SQLModel.metadata.create_all(engine)
+
 
 st.set_page_config(page_title="Anki App", layout="wide")
 

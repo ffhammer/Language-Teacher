@@ -2,12 +2,10 @@ from datetime import date
 
 from sqlmodel import Session, create_engine, select
 
-from src.anki import AnkiCard, CardCategory, SQLModel
+from src.anki import AnkiCard, CardCategory
 from src.audio import add_audios_inplance
 
 engine = create_engine("sqlite:///db.sqlite")
-
-SQLModel.metadata.create_all(engine)
 
 
 def get_cards_next_cards(category="All") -> list[AnkiCard]:

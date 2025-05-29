@@ -1,5 +1,4 @@
 import json
-from typing import Optional
 
 import markdown
 import streamlit as st
@@ -10,22 +9,9 @@ from pydantic import BaseModel, Field
 from streamlit import session_state as state
 from tqdm import tqdm
 
-from src.anki import CardCategory
+from src.anki import CardCategory, SimpleAnkiCard
 from src.db import add_card
 from src.llm import gemini_structured_input
-
-
-class SimpleAnkiCard(BaseModel):
-    a_content: str = Field(description="The Content of one site")
-    b_content: str = Field(description="The Content of translation/other site")
-    category: CardCategory
-    notes: Optional[str] = Field(
-        None, description="Optional notes and context or examples"
-    )
-    id: Optional[int] = Field(
-        None,
-        description="When generating a new card, keep this as None!. When updating, use the specific id",
-    )
 
 
 class ModelAction(BaseModel):
@@ -193,6 +179,7 @@ with msg_area:
             if bot_reply:
                 state.chat.append((bot_reply, "bot"))
             state.input = ""
+
             st.rerun()
 
 
