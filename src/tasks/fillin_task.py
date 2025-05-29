@@ -208,6 +208,10 @@ class FillInTask(BaseTask, table=True):
             "Ensure the output strictly follows the given schema."
         )
         contents = f"Title: {title}\n\nGeneration Instruction: {generation_instruction}\n\nPurpose: {purpose}"
-        return gemini_structured_ouput(
-            system_prompt=system_prompt, contents=contents, Schema=cls, timeout=timeout
+        as_dict = gemini_structured_ouput(
+            system_prompt=system_prompt,
+            contents=contents,
+            Schema=cls.model_json_schema(),
+            timeout=timeout,
         )
+        return cls(**as_dict)
