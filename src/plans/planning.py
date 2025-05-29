@@ -7,8 +7,8 @@ from google.genai import types
 from loguru import logger
 from pydantic import BaseModel, Field
 
-from src.config import LEVEL, SOURCE_LANGUAGE, TARGET_LANGUAGE
-from src.llm import gemini_structured_input, retry_n_times
+from src.config import INITIAL_PROMPT, SOURCE_LANGUAGE, TARGET_LANGUAGE
+from src.llm import gemini_structured_ouput, retry_n_times
 
 
 class TaskCategories(StrEnum):
@@ -75,10 +75,7 @@ class StudyPlan(BaseModel):
 
 
 PLANNER_PROMPT = f"""
-You are an educational assistant helping a student learn {TARGET_LANGUAGE} using {SOURCE_LANGUAGE} as the instruction language.
-
-The student's current proficiency level in {TARGET_LANGUAGE} is {LEVEL}.
-
+{INITIAL_PROMPT}
 Your job is to help the user plan a new study plan. Listen to what the user wants and create tasks accordingly.
 Initially, you will get an optional summary of the user's past performance so you can create tailored exercises,
 especially regarding their weaknesses.
@@ -108,10 +105,7 @@ The kinds of tasks available, their descriptions, and when to use them:
 
 
 CRITIC_PROMPT = f"""
-You are an educational assistant helping a student learn {TARGET_LANGUAGE} using {SOURCE_LANGUAGE} as the instruction language.
-
-The student's current proficiency level in {TARGET_LANGUAGE} is {LEVEL}.
-
+{INITIAL_PROMPT}
 Your role is to act as the Planning Stage Critic. You will receive messages from the User, the Summary Agent, and most importantly, the Planning Agent.
 Your job is to evaluate whether the plan proposed by the Planning Agent is effective and appropriate for the student's needs. If you identify any issues, gaps, or areas for improvement, provide clear and constructive feedback to help refine the plan.
 
@@ -218,7 +212,7 @@ def generate_new_plan(
     n_times_critism=1,
     retries=1,
 ) -> Generator[tuple[History_Type, StudyPlan | None], Any, Any]:
-    plan: StudyPlan = retry_n_times(n=retries)(gemini_structured_input)(
+    plan: StudyPlan = retry_n_times(n=retries)(gemini_structured_ouput)(
         PLANNER_PROMPT, to_gemini_content(history), StudyPlan, timeout=15
     )
 
@@ -236,7 +230,7 @@ def generate_new_plan(
     yield history, plan
 
     for n in range(n_times_critism):
-        criticsm: CriticOutput = retry_n_times(n=retries)(gemini_structured_input)(
+        criticsm: CriticOutput = retry_n_times(n=retries)(gemini_structured_ouput)(
             CRITIC_PROMPT, to_gemini_content(history), CriticOutput, timeout=15
         )
 
@@ -251,7 +245,7 @@ def generate_new_plan(
             continue
 
         history.append((ChatSpeaker.critic_agent, criticsm.criticism))
-        new_plan = retry_n_times(n=retries)(gemini_structured_input)(
+        new_plan = retry_n_times(n=retries)(gemini_structured_ouput)(
             PLANNER_PROMPT, to_gemini_content(history), StudyPlan, timeout=15
         )
         if new_plan is None:

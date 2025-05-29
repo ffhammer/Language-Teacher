@@ -11,6 +11,8 @@ from pydantic import (
 )
 from sqlmodel import Column, Field
 
+from src.config import INITIAL_PROMPT, LEVEL, SOURCE_LANGUAGE, TARGET_LANGUAGE
+from src.llm import gemini_structured_ouput
 from src.utils import JsonEncodedStrList
 
 from .base_task import BaseTask
@@ -188,3 +190,24 @@ class FillInTask(BaseTask, table=True):
                 if validation_status == "false":
                     errors.append((expected_solution_str, user_input_str))
         return errors
+
+    @classmethod
+    def generate(
+        cls, title: str, generation_instruction: str, purpose: str, timeout: float = 10
+    ):
+        system_prompt = (
+            f"{INITIAL_PROMPT}\n\n"
+            "You are generating a fill-in-the-blank language learning task for a student learning "
+            f"{TARGET_LANGUAGE} (instruction language: {SOURCE_LANGUAGE}, level: {LEVEL}).\n"
+            "Task type: fill_in.\n"
+            "Description: Fill-in-the-blank exercises where the learner types the missing word(s) or letters into a sentence.\n"
+            "When to use: Useful for vocabulary recall, grammar points, or testing specific knowledge in context. Use when you want the learner to actively recall and produce language. "
+            "Also very good to test if the user conjugates correctly, understands verb tense, or applies correct endings.\n"
+            "You will receive a title, a generation instruction, and a purpose for the task, along with a JSON output schema. "
+            "Focus on generating high-quality, level-appropriate content based on the provided details. "
+            "Ensure the output strictly follows the given schema."
+        )
+        contents = f"Title: {title}\n\nGeneration Instruction: {generation_instruction}\n\nPurpose: {purpose}"
+        return gemini_structured_ouput(
+            system_prompt=system_prompt, contents=contents, Schema=cls, timeout=timeout
+        )

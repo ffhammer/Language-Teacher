@@ -6,6 +6,8 @@ from loguru import logger
 from pydantic import BaseModel, computed_field, model_validator
 from sqlmodel import Column, Field
 
+from src.config import LEVEL, SOURCE_LANGUAGE, TARGET_LANGUAGE
+from src.llm import gemini_structured_ouput
 from src.utils import JsonEncodedListofBaseModels
 
 from .base_task import BaseTask
@@ -48,6 +50,26 @@ class DraggingTask(BaseTask, table=True):
         min_length=1,
         sa_column=Column(JsonEncodedListofBaseModels(item_type=DragAndDropTaskRow)),
     )
+
+    @classmethod
+    def generate(
+        cls, title: str, generation_instruction: str, purpose: str, timeout: float = 10
+    ):
+        system_prompt = (
+            "You are generating a drag-and-drop language learning task for a student learning "
+            f"{TARGET_LANGUAGE} (instruction language: {SOURCE_LANGUAGE}, level: {LEVEL}).\n"
+            "Task type: drag_and_drop.\n"
+            "Description: Sentence-based tasks where the learner drags and drops words or phrases into blanks to complete a sentence.\n"
+            "When to use: Great for practicing word order, grammar, and sentence structure. Use when the goal is to reinforce syntax or test understanding of sentence construction. "
+            "Also great when the user needs to choose the specific form of a verb, adjective, or pronoun.\n"
+            "You will receive a title, a generation instruction, and a purpose for the task, along with a JSON output schema. "
+            "Focus on generating high-quality, level-appropriate content based on the provided details. "
+            "Ensure the output strictly follows the given schema."
+        )
+        contents = f"Title: {title}\n\nGeneration Instruction: {generation_instruction}\n\nPurpose: {purpose}"
+        return gemini_structured_ouput(
+            system_prompt=system_prompt, contents=contents, Schema=cls, timeout=timeout
+        )
 
     def display(self) -> bool:
         st.markdown(f"## {self.title}", unsafe_allow_html=True)

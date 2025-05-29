@@ -11,7 +11,7 @@ from tqdm import tqdm
 
 from src.anki import CardCategory, SimpleAnkiCard
 from src.db import add_card
-from src.llm import gemini_structured_input
+from src.llm import gemini_structured_ouput
 
 
 class ModelAction(BaseModel):
@@ -95,7 +95,7 @@ def get_reply(history) -> str:
     logger.debug(system_message.format(cards_string=cards_string))
 
     try:
-        response: ModelAction = gemini_structured_input(
+        response: ModelAction = gemini_structured_ouput(
             system_prompt=system_message.format(cards_string=cards_string),
             contents=content,
             Schema=ModelAction,

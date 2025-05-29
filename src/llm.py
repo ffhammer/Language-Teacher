@@ -103,7 +103,7 @@ def gemini_text_response(
         return None
 
 
-def gemini_structured_input(
+def gemini_structured_ouput(
     system_prompt: str,
     contents,
     Schema: Type[BaseModel],

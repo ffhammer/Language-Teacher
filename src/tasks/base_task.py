@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from typing import Optional
 
 from sqlmodel import Field, SQLModel
@@ -5,7 +6,7 @@ from sqlmodel import Field, SQLModel
 from src.utils import drop_fields_from_schema
 
 
-class BaseTask(SQLModel):
+class BaseTask(SQLModel, ABC):
     __table_args__ = {"extend_existing": True}
 
     id: Optional[int] = Field(None, primary_key=True, index=True)
@@ -33,3 +34,14 @@ class BaseTask(SQLModel):
         return drop_fields_from_schema(
             json_schema=schema, fields_to_ignore=["excercise_plan_id", "id", "finished"]
         )
+
+    @abstractmethod
+    def display():
+        pass
+
+    @abstractmethod
+    @classmethod
+    def generate(
+        cls, title: str, generation_instruction: str, purpose: str, timeout: float = 10
+    ) -> Optional["BaseTask"]:
+        pass

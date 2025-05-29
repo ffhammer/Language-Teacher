@@ -8,7 +8,9 @@ from pydub.playback import play
 from sqlmodel import Field, Relationship, Session
 
 from src.anki import AnkiCard, update_card
+from src.config import INITIAL_PROMPT, LEVEL, SOURCE_LANGUAGE, TARGET_LANGUAGE
 from src.db import engine
+from src.llm import gemini_structured_ouput
 
 from .base_task import BaseTask
 
@@ -205,3 +207,24 @@ class VocabTask(BaseTask, table=True):
                         st.session_state.current_batch = [0, failures, []]
             with col2:
                 return st.button("Back to Menu")
+
+    @classmethod
+    def generate(
+        cls, title: str, generation_instruction: str, purpose: str, timeout: float = 10
+    ):
+        system_prompt = (
+            f"{INITIAL_PROMPT}\n\n"
+            "You are generating a vocabulary flashcard task for a student learning "
+            f"{TARGET_LANGUAGE} (instruction language: {SOURCE_LANGUAGE}, level: {LEVEL}).\n"
+            "Task type: vocab.\n"
+            "Description: Vocabulary flashcard tasks, often with spaced repetition, where the learner reviews and rates their knowledge of words or phrases.\n"
+            "When to use: Introduce new vocabulary to the user or reinforce previously learned words.\n"
+            "You will receive a title, a generation instruction, and a purpose for the task, along with a JSON output schema. "
+            "Focus on generating high-quality, level-appropriate vocabulary content based on the provided details. "
+            "Ensure the output strictly follows the given schema."
+        )
+        contents = f"Title: {title}\n\nGeneration Instruction: {generation_instruction}\n\nPurpose: {purpose}"
+
+        return gemini_structured_ouput(
+            system_prompt=system_prompt, contents=contents, Schema=cls, timeout=timeout
+        )
